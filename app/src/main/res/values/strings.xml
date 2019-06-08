@@ -16,6 +16,8 @@
         For more information, see https://support.google.com/admob/answer/3052638
     <!- -->
     <string name="interstitial_ad_unit_id">ca-app-pub-6533009207390795/7760433461</string>
+    <string name="channel_name">Game Mode</string>
+    <string name="channel_description">Toggle Game Mode on and off</string>
 
     <!-- Strings related to Settings -->
 

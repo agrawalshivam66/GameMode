@@ -25,13 +25,10 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
-
-        <activity android:name=".SettingActivity"
-            android:label="Settings">
-
-        </activity>
+        <activity
+            android:name=".SettingActivity"
+            android:label="Settings"></activity>
         <!-- Include the AdActivity configChanges and theme. -->
         <activity
             android:name="com.google.android.gms.ads.AdActivity"
@@ -40,7 +37,12 @@
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-6533009207390795~4638488248"/>
+            android:value="ca-app-pub-6533009207390795~4638488248" />
+
+        <receiver
+            android:name=".GameModeBroadcast"
+            android:enabled="true"
+            android:exported="true"></receiver>
     </application>
 
 </manifest>

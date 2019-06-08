@@ -3,7 +3,10 @@ package com.example.shivam_pc.gamemode;
 import android.app.ActivityManager;
 import android.app.ActivityManager.MemoryInfo;
 import android.app.ActivityManager.RunningAppProcessInfo;
+import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -19,6 +22,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
 import android.provider.Settings;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -33,6 +38,7 @@ import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
+    private static final String CHANNEL_ID ="GameModeChannel" ;
     private DecimalFormat Roundto4Decimalformat;
     NotificationManager mNotificationManager;
     TextView tvFreeRam_Memory;
@@ -55,11 +61,16 @@ public class MainActivity extends AppCompatActivity {
 
         mNotificationManager  = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         SavedSettings = this.getSharedPreferences("SavedSettings",Context.MODE_PRIVATE);
-        final SharedPreferences.Editor SharedPreferencesEditor= SavedSettings.edit();
-        SharedPreferencesEditor.putBoolean("BoostStatus",false);
-        SharedPreferencesEditor.apply();
         String DeviceModel = Build.MODEL;
         RefreshRamProgressBar();
+
+        //Resume last boost status
+        if(SavedSettings.getBoolean("BoostStatus",false)){
+            BoostButton.setText("Stop Boosting");
+        }
+        else {
+            BoostButton.setText("Boost");
+        }
 
     }
 
@@ -69,15 +80,17 @@ public class MainActivity extends AppCompatActivity {
         circularImageBar(ramInfoGraph,100-i);
     }
 
+
     public void Boost(View view) {
-    if(SavedSettings.getBoolean("BoostStatus",false)){
-        stopBoost();//stop boost if true
+        if(SavedSettings.getBoolean("BoostStatus",false)){
+            stopBoost();//stop boost if true
+     }
+        else {
+            startBoost();//boost if false
+     }
     }
-    else {
-        startBoost();//boost if false
-    }
-    }
-//Boost function
+
+    //StartBoost function
     public void startBoost(){
         //DND only if All notification is true
         if(SavedSettings.getBoolean(getString(R.string.AllNotification),true)) {
@@ -96,7 +109,12 @@ public class MainActivity extends AppCompatActivity {
             RefreshRamProgressBar();
 
         }
+        //show notification
+        createNotification();
+
         Toast.makeText(this, "Boosting Your game", Toast.LENGTH_SHORT).show();
+
+        //change save settings boost status to true
         SavedSettings.edit().putBoolean("BoostStatus",true).apply();
         BoostButton.setText("Stop Boosting");
     }
@@ -137,11 +155,11 @@ public class MainActivity extends AppCompatActivity {
     public void startDND() {
         if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
             // Permission is not granted
-            Toast.makeText(this, "Please allow Game mode do not disturb access", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Please allow Game Mode do not disturb access", Toast.LENGTH_LONG).show();
             startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
         }
         else {
-            Toast.makeText(this, "Starting game mode", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Starting Game Mode", Toast.LENGTH_SHORT).show();
             mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
         }
     }
@@ -149,12 +167,56 @@ public class MainActivity extends AppCompatActivity {
     public void stopDND() {
         if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
             // Permission is not granted
-            Toast.makeText(this, "Please allow Game mode do not disturb access", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Please allow Game Mode do not disturb access", Toast.LENGTH_LONG).show();
             startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
         } else {
-            Toast.makeText(this, "Stopping game mode", Toast.LENGTH_SHORT);
+            Toast.makeText(this, "Stopping Game Mode", Toast.LENGTH_SHORT);
             mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
         }
+    }
+
+    private void createNotification() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.channel_name);
+            String description = getString(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        Intent StopBoostIntent = new Intent(this,GameModeBroadcast.class);
+        PendingIntent StopBoostPendingIntent =
+                PendingIntent.getBroadcast(this, 0, StopBoostIntent, 0);
+
+        // Create an explicit intent for an Activity in your app
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        //Boost Notification Builder
+        NotificationCompat.Builder NotificationBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.gameiconred)
+                .setContentTitle("Game Mode ON ")
+                .setContentText("BOOSTING YOUR GAME")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                // Set the intent that will fire when the user taps the notification
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .addAction( R.drawable.gameiconred,"Stop Boosting",
+                        StopBoostPendingIntent);
+
+        Notification notification = NotificationBuilder.build();
+        //Showing Notification
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        // notificationId is a unique int for each notification that you must define
+        notificationManager.notify(1, NotificationBuilder.build());
+
     }
 
     private void killBackgroundApps() {
