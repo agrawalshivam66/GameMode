@@ -7,8 +7,10 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -64,13 +66,7 @@ public class MainActivity extends AppCompatActivity {
         String DeviceModel = Build.MODEL;
         RefreshRamProgressBar();
 
-        //Resume last boost status
-        if(SavedSettings.getBoolean("BoostStatus",false)){
-            BoostButton.setText("Stop Boosting");
-        }
-        else {
-            BoostButton.setText("Boost");
-        }
+        refreshStatus();
 
     }
 
@@ -175,6 +171,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //to create and show notification
     private void createNotification() {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
@@ -287,16 +284,33 @@ public class MainActivity extends AppCompatActivity {
         return percentAvail;
     }
 
+    public void refreshStatus(){
+        this.tvFreeRam_Memory.setText( this.Roundto4Decimalformat.format(getCurrentRAM_Memory()) + " GB");
+        //Resume last boost status
+        if(SavedSettings.getBoolean("BoostStatus",false)){
+            BoostButton.setText("Stop Boosting");
+        }
+        else {
+            BoostButton.setText("Boost");
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        this.tvFreeRam_Memory.setText( this.Roundto4Decimalformat.format(getCurrentRAM_Memory()) + " GB");
+        refreshStatus();
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        this.tvFreeRam_Memory.setText(this.Roundto4Decimalformat.format(getCurrentRAM_Memory()) + " GB");
+        refreshStatus();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        refreshStatus();
     }
 
     public void settingsActivity(View view) {
@@ -304,6 +318,7 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
 
     }
+
 
 }
 
