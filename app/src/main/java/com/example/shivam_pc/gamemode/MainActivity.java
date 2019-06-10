@@ -17,6 +17,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
@@ -24,7 +26,11 @@ import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -65,6 +71,26 @@ public class MainActivity extends AppCompatActivity {
 
         refreshStatus();
 
+        //Setup toolbar
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolbar);
+
+
+    }
+
+    //Clearing stuff and RAM in background
+    class AsyncTaskHandler extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            File appDir = new File(getCacheDir().getParent());
+            MyApplication clrCache = new MyApplication();
+            clrCache.clearApplicationData(appDir);
+            MainActivity.this.clearMem();
+            MainActivity.this.freeSpecificSpaceFromCache();
+            MainActivity.this.killBackgroundApps();
+            return null;
+
+        }
     }
 
     private void RefreshRamProgressBar() {
@@ -75,12 +101,14 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void Boost(View view) {
+
         if(SavedSettings.getBoolean("BoostStatus",false)){
             stopBoost();//stop boost if true
-     }
+        }
         else {
             startBoost();//boost if false
-     }
+        }
+
     }
 
     //StartBoost function
@@ -92,14 +120,13 @@ public class MainActivity extends AppCompatActivity {
 
         //Clear Background only if ClearBackground is on
          if(SavedSettings.getBoolean("ClearBackground",true)){
-            File appDir = new File(getCacheDir().getParent());
-            MyApplication clrCache = new MyApplication();
-            clrCache.clearApplicationData(appDir);
-            MainActivity.this.clearMem();
-            MainActivity.this.freeSpecificSpaceFromCache();
-            MainActivity.this.killBackgroundApps();
+            
+            //Clearing stuff and RAM in background
+            new AsyncTaskHandler().execute();
+
             this.tvFreeRam_Memory.setText(this.Roundto4Decimalformat.format(getCurrentRAM_Memory()) + " GB");
             RefreshRamProgressBar();
+
 
         }
         //show notification
@@ -165,6 +192,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Stopping Game Mode", Toast.LENGTH_SHORT);
             mNotificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            mNotificationManager.cancelAll();
         }
     }
 
@@ -310,12 +338,46 @@ public class MainActivity extends AppCompatActivity {
         refreshStatus();
     }
 
-    public void settingsActivity(View view) {
-        Intent intent = new Intent(this, SettingActivity.class);
-        startActivity(intent);
-
+    //creating Menu in toolbar
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.options, menu);
+        return true;
     }
 
+    //Option Menu selections in toolbar
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                // User chose the "Settings" item, show the app settings UI...
+                Intent intent = new Intent(this, SettingActivity.class);
+                startActivity(intent);
+                return true;
+
+            case R.id.action_feedback:
+                // Email feedback for my personal address
+                String addresses[] = {"agrawalshivam66@gmail.com"};
+                String subject = "Game Mode app feedback";
+                Intent MailIntent = new Intent(Intent.ACTION_SENDTO);
+                MailIntent.setData(Uri.parse("mailto:")); // only email apps should handle this
+                MailIntent.putExtra(Intent.EXTRA_EMAIL, addresses);
+                MailIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+                if (MailIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(MailIntent);
+                    Toast.makeText(this, "Please type your suggestions and attach screenshots if required", Toast.LENGTH_LONG).show();
+                }
+                return true;
+
+
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+
+        }
+    }
 
 }
 
