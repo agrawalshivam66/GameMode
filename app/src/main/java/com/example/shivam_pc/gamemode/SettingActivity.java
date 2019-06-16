@@ -120,6 +120,16 @@ public class SettingActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
 
+            case R.id.action_about:
+                Intent about = new Intent(this,about_activity.class);
+                startActivity(about);
+                return true;
+
+            case R.id.action_privacy:
+                Intent privacy = new Intent(this,privacy_activity.class);
+                startActivity(privacy);
+                return true;
+
             case R.id.action_feedback:
                 // Email feedback for my personal address
                 String addresses[] = {"agrawalshivam66@gmail.com"};

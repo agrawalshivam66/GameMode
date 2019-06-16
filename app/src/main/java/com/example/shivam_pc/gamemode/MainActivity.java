@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
 
         //Clear Background only if ClearBackground is on
          if(SavedSettings.getBoolean("ClearBackground",true)){
-            
+
             //Clearing stuff and RAM in background
             new AsyncTaskHandler().execute();
 
@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         final RectF oval = new RectF();
         paint.setStyle(Paint.Style.STROKE);
         oval.set(10,10,290,290);
-        canvas.drawArc(oval, 180, ((i*360)/100), false, paint);
+        canvas.drawArc(oval, 90, ((i*360)/100), false, paint);
         paint.setStrokeWidth(0);
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setColor(Color.parseColor("#8E8E93"));
@@ -370,6 +370,16 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return true;
 
+
+            case R.id.action_about:
+                Intent about = new Intent(this,about_activity.class);
+                startActivity(about);
+                return true;
+
+            case R.id.action_privacy:
+                Intent privacy = new Intent(this,privacy_activity.class);
+                startActivity(privacy);
+                return true;
 
             default:
                 // If we got here, the user's action was not recognized.

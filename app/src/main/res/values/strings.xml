@@ -20,6 +20,9 @@
     <string name="channel_description">Toggle Game Mode on and off</string>
 
     <!-- Strings related to Settings -->
+    <string name="privacyPolicy">"We don't store or save any kind of data about our users.
+It is an offline application and no internet is required to use it.
+The permission of do not disturb used is only to switch 'do not disturb' on and off."</string>
 
     <!-- Example General settings -->
 
